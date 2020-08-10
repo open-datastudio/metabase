@@ -1,0 +1,22 @@
+# Skaffold handles the workflow for building and deploying kubernetes resources.
+# see https://skaffold.dev/docs/references/yaml for more details.
+#
+apiVersion: skaffold/v2beta1
+kind: Config
+build:
+  artifacts:
+  - image: metabase
+    context: .
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - ./k8s/metabase.yaml
+  statusCheckDeadlineSeconds: 360
+profiles:
+  - name: minikube
+    patches:
+      - op: add
+        path: /deploy/kubectl/manifests/0
+        value: ./k8s/minikube.yaml

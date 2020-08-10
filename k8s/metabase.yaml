@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metabase-deployment
+spec:
+  replicas: 1
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app: metabase
+  template:
+    metadata:
+      labels:
+        app: metabase
+        pod.staroid.com/isolation: dedicated # since persistent volume claim (for db) is supported only in dedicated mode
+        pod.staroid.com/instance-type: standard-2
+    spec:
+      securityContext:
+        runAsUser: 2000
+        runAsGroup: 2000
+        fsGroup: 2000
+      containers:
+      - name: postgres
+        image: postgres:12.3
+        env:
+        - name: POSTGRES_USER
+          value: metabase
+        - name: POSTGRES_PASSWORD
+          value: metabase
+        - name: POSTGRES_DB
+          value: metabase
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: app-volume
+          mountPath: /var/lib/postgresql/data
+          subPath: db
+      - name: metabase
+        image: metabase
+        env:
+        - name: MB_DB_TYPE
+          value: postgres
+        - name: MB_DB_PASS
+          value: metabase
+        - name: MB_DB_USER
+          value: metabase
+        - name: MB_DB_DBNAME
+          value: metabase
+        - name: MB_DB_HOST
+          value: localhost
+        - name: MB_DB_PORT
+          value: "5432"
+        - name: MB_DB_FILE
+          value: /metabase-data/metabase.db
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: app-volume
+          mountPath: /metabase-data
+          subPath: metabase-data
+        - name: app-volume
+          mountPath: /plugins
+          subPath: plugins
+      - name: cloudcmd
+        image: coderaiser/cloudcmd:14.5.1-alpine
+        args: [ "--one-file-panel", "--root", "/mnt" ]
+        volumeMounts:
+        - name: app-volume
+          mountPath: /mnt
+        env:
+        - name: HOME
+          value: /
+      volumes:
+      - name: app-volume
+        persistentVolumeClaim:
+          claimName: app-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  storageClassName: ssd
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: metabase-service
+spec:
+  ports:
+  - port: 3000
+  selector:
+    app: metabase
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: file-manager
+  annotations:
+    service.staroid.com/link: "show" # This will display link to the service on staroid management console
+spec:
+  ports:
+  - name: http
+    port: 8000
+  selector:
+    app: metabase

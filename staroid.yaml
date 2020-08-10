@@ -1,0 +1,34 @@
+# This file explains how to build, deploy the project.
+# see https://docs.staroid.com/references/staroid_yaml.html to learn more.
+#
+apiVersion: beta/v1
+starRank:
+  rate: 1.0   # community rate
+build:
+  skaffold:
+    file: .staroid/skaffold.yaml
+ingress:
+  - serviceName: metabase-service
+    port: 3000
+deploy:
+  paramGroups:
+    - name: General configurations
+      params:
+      - name: Instance type
+        type: STRING
+        defaultValue: standard-2
+        options:
+        - name: standard-2 (2CPU, 8GB Mem)
+          value: standard-2
+        - name: standard-4 (4CPU, 16GB Mem)
+          value: standard-4
+        - name: standard-8 (8CPU, 32GB Mem)
+          value: standard-8
+        paths:
+        - Deployment:metabase-deployment:spec.template.metadata.labels["pod.staroid.com/instance-type"]
+      - name: Disk size
+        description: "Persistent disk size for database and app"
+        type: STRING
+        defaultValue: 2Gi
+        paths:
+        - PersistentVolumeClaim:app-pvc:spec.resources.requests.storage

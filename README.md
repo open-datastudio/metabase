@@ -2,11 +2,10 @@
 
 Deploy your own [metabase](https://github.com/metabase/metabase) server on [staroid](https://staroid.com).
 
-- Postgresql DB
 - Configurable instance (CPU/Mem)
-- Configurable metabase version
+- Configured with Postgresql DB
 - Connect to database in your private network through secure tunnel
-- File manager for plugin directory
+- File manager to manage plugin directory
 
 [![Run](https://staroid.com/api/run/button.svg)](https://staroid.com/api/run)
 
@@ -27,5 +26,5 @@ skaffold dev -f skaffold.yaml --port-forward -p minikube
 
 Browse
 
- - localhost:1337 - strapi
+ - localhost:3000 - metabase
  - localhost:8000 - file browser

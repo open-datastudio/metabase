@@ -6,7 +6,7 @@ starRank:
   rate: 1.0   # community rate
 build:
   skaffold:
-    file: .staroid/skaffold.yaml
+    file: skaffold.yaml
 ingress:
   - serviceName: metabase-service
     port: 3000
